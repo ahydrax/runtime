@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetPlatformSupported>true</TargetPlatformSupported>
     <TargetPlatformVersionSupported>true</TargetPlatformVersionSupported>
+    <!-- We don't want netstandard2.0 to have a Windows TargetPlatformIdentifier as a default. -->
 
     <!-- Value of 0.0 produces versionless SupportedOSPlatform attribute.
          This is required for platforms not expected to have a version,

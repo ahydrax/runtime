@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(NetCoreAppCurrent);net461</TargetFrameworks>
+    <TargetFrameworks>$(NetCoreAppCurrent);ne$(NetFrameworkMinimum)t461</TargetFrameworks>
     <EnableDefaultItems>true</EnableDefaultItems>
     <OutputType>Exe</OutputType>
   </PropertyGroup>

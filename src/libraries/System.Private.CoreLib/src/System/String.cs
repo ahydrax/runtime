@@ -328,26 +328,25 @@ namespace System
                 {
                     fixed (char* dest = &result._firstChar)
                     {
-                        uint cc = (uint)((c << 16) | c);
-                        uint* dmem = (uint*)dest;
-                        if (count >= 4)
+                        switch (count)
                         {
-                            count -= 4;
-                            do
-                            {
-                                dmem[0] = cc;
-                                dmem[1] = cc;
-                                dmem += 2;
-                                count -= 4;
-                            } while (count >= 0);
+                            case 1:
+                                dest[0] = c;
+                                break;
+                            case 2:
+                                dest[0] = c;
+                                dest[1] = c;
+                                break;
+                            case 3:
+                                dest[0] = c;
+                                dest[1] = c;
+                                dest[2] = c;
+                                break;
+                            default:
+                                ref char r = ref Unsafe.AsRef<char>(dest);
+                                SpanHelpers.Fill(ref r, (nuint) count, c);
+                                break;
                         }
-                        if ((count & 2) != 0)
-                        {
-                            *dmem = cc;
-                            dmem++;
-                        }
-                        if ((count & 1) != 0)
-                            ((char*)dmem)[0] = c;
                     }
                 }
             }

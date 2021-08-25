@@ -21,8 +21,10 @@ namespace System
     // positions (indices) are zero-based.
 
     [Serializable]
-    [System.Runtime.CompilerServices.TypeForwardedFrom("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
-    public sealed partial class String : IComparable, IEnumerable, IConvertible, IEnumerable<char>, IComparable<string?>, IEquatable<string?>, ICloneable
+    [System.Runtime.CompilerServices.TypeForwardedFrom(
+        "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public sealed partial class String : IComparable, IEnumerable, IConvertible, IEnumerable<char>, IComparable<string?>,
+        IEquatable<string?>, ICloneable
     {
         /// <summary>Maximum length allowed for a string.</summary>
         /// <remarks>Keep in sync with AllocateString in gchelpers.cpp.</remarks>
@@ -33,22 +35,19 @@ namespace System
         // It is treated as intrinsic by the JIT as so the static constructor would never run.
         // Leaving it uninitialized would confuse debuggers.
 #pragma warning disable CS8618 // compiler sees this non-nullable static string as uninitialized
-        [Intrinsic]
-        public static readonly string Empty;
+        [Intrinsic] public static readonly string Empty;
 #pragma warning restore CS8618
 #endif
 
         //
         // These fields map directly onto the fields in an EE StringObject.  See object.h for the layout.
         //
-        [NonSerialized]
-        private readonly int _stringLength;
+        [NonSerialized] private readonly int _stringLength;
 
         // For empty strings, _firstChar will be '\0', since strings are both null-terminated and length-prefixed.
         // The field is also read-only, however String uses .ctors that C# doesn't recognise as .ctors,
         // so trying to mark the field as 'readonly' causes the compiler to complain.
-        [NonSerialized]
-        private char _firstChar;
+        [NonSerialized] private char _firstChar;
 
         /*
          * CONSTRUCTORS
@@ -68,7 +67,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        string Ctor(char[]? value)
+            string Ctor(char[]? value)
         {
             if (value == null || value.Length == 0)
                 return Empty;
@@ -91,7 +90,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        string Ctor(char[] value, int startIndex, int length)
+            string Ctor(char[] value, int startIndex, int length)
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
@@ -127,7 +126,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        unsafe string Ctor(char* ptr)
+            unsafe string Ctor(char* ptr)
         {
             if (ptr == null)
                 return Empty;
@@ -155,7 +154,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        unsafe string Ctor(char* ptr, int startIndex, int length)
+            unsafe string Ctor(char* ptr, int startIndex, int length)
         {
             if (length < 0)
                 throw new ArgumentOutOfRangeException(nameof(length), SR.ArgumentOutOfRange_NegativeLength);
@@ -178,9 +177,9 @@ namespace System
             string result = FastAllocateString(length);
 
             Buffer.Memmove(
-               elementCount: (uint)result.Length, // derefing Length now allows JIT to prove 'result' not null below
-               destination: ref result._firstChar,
-               source: ref *pStart);
+                elementCount: (uint)result.Length, // derefing Length now allows JIT to prove 'result' not null below
+                destination: ref result._firstChar,
+                source: ref *pStart);
 
             return result;
         }
@@ -194,7 +193,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        unsafe string Ctor(sbyte* value)
+            unsafe string Ctor(sbyte* value)
         {
             byte* pb = (byte*)value;
             if (pb == null)
@@ -214,7 +213,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        unsafe string Ctor(sbyte* value, int startIndex, int length)
+            unsafe string Ctor(sbyte* value, int startIndex, int length)
         {
             if (startIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(startIndex), SR.ArgumentOutOfRange_StartIndex);
@@ -249,15 +248,18 @@ namespace System
                 return Empty;
 
 #if TARGET_WINDOWS
-            int numCharsRequired = Interop.Kernel32.MultiByteToWideChar(Interop.Kernel32.CP_ACP, Interop.Kernel32.MB_PRECOMPOSED, pb, numBytes, (char*)null, 0);
+            int numCharsRequired = Interop.Kernel32.MultiByteToWideChar(Interop.Kernel32.CP_ACP, Interop.Kernel32.MB_PRECOMPOSED,
+                pb, numBytes, (char*)null, 0);
             if (numCharsRequired == 0)
                 throw new ArgumentException(SR.Arg_InvalidANSIString);
 
             string newString = FastAllocateString(numCharsRequired);
             fixed (char* pFirstChar = &newString._firstChar)
             {
-                numCharsRequired = Interop.Kernel32.MultiByteToWideChar(Interop.Kernel32.CP_ACP, Interop.Kernel32.MB_PRECOMPOSED, pb, numBytes, pFirstChar, numCharsRequired);
+                numCharsRequired = Interop.Kernel32.MultiByteToWideChar(Interop.Kernel32.CP_ACP, Interop.Kernel32.MB_PRECOMPOSED,
+                    pb, numBytes, pFirstChar, numCharsRequired);
             }
+
             if (numCharsRequired == 0)
                 throw new ArgumentException(SR.Arg_InvalidANSIString);
             return newString;
@@ -275,7 +277,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        unsafe string Ctor(sbyte* value, int startIndex, int length, Encoding? enc)
+            unsafe string Ctor(sbyte* value, int startIndex, int length, Encoding? enc)
         {
             if (enc == null)
                 return new string(value, startIndex, length);
@@ -311,7 +313,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        string Ctor(char c, int count)
+            string Ctor(char c, int count)
         {
             if (count <= 0)
             {
@@ -321,35 +323,123 @@ namespace System
             }
 
             string result = FastAllocateString(count);
-
+            //"jjjjjjjjjjjjjjjjjj jj jjjj"
             if (c != '\0') // Fast path null char string
             {
-                unsafe
+                if (count < 32)
                 {
+                    ref char dc = ref result._firstChar;
+                    ref uint du = ref Unsafe.As<char, uint>(ref dc);
+                    uint cc = (uint)((c << 16) | c);
+                    if (count >= 4)
+                    {
+                        count -= 4;
+                        do
+                        {
+                            Unsafe.Add(ref du, 0) = cc;
+                            Unsafe.Add(ref du, 1) = cc;
+                            du = ref Unsafe.Add(ref du, 2);
+                            count -= 4;
+                        } while (count >= 0);
+                    }
+                    if ((count & 2) != 0)
+                    {
+                        Unsafe.Add(ref du, 0) = cc;
+                        du = ref Unsafe.Add(ref du, 1);
+                    }
+                    Unsafe.Add(ref Unsafe.As<uint, char>(ref du), 0) = c;
+                    return result;
+                }
+
+                SpanHelpers.Fill(ref result._firstChar, (nuint)count, c);
+
+                /*
+                ref char fc = ref result._firstChar;
+                ref uint fui = ref Unsafe.As<char, uint>(ref fc);
+                uint cc = (uint)c << 16 | c;
+
+                switch (count)
+                {
+                    case 1:
+                        result._firstChar = c;
+                        break;
+                    case 2:
+                        fui = cc;
+                        break;
+                    case 3:
+                        fui = cc;
+                        Unsafe.Add(ref result._firstChar, 2) = c;
+                        break;
+                    case 4:
+                        Unsafe.Add(ref fui, 0) = c;
+                        Unsafe.Add(ref fui, 1) = c;
+                        break;
+                    default:
+                        ref char vd = ref result._firstChar;
+                        SpanHelpers.Fill(ref vd, (nuint)count, c);
+                        break;
+                }
+
+                /*unsafe
+                {
+
+                    ref char vd = ref result._firstChar;
+                    SpanHelpers.Fill(ref r, (nuint)count, c);
+                    return re;
+
                     fixed (char* dest = &result._firstChar)
                     {
+                        uint cc = ((uint)c << 16) | c;
+                        uint* dmem = (uint*)dest;
+
                         switch (count)
                         {
-                            case 1:
-                                dest[0] = c;
-                                break;
                             case 2:
-                                dest[0] = c;
-                                dest[1] = c;
+                                dmem[0] = cc;
                                 break;
                             case 3:
-                                dest[0] = c;
-                                dest[1] = c;
-                                dest[2] = c;
+                                dmem[0] = cc;
+                                ((char*)dmem)[2] = c;
+                                break;
+                            case 4:
+                                dmem[0] = cc;
+                                dmem[1] = cc;
+                                break;
+                            case 5:
+                                dmem[0] = cc;
+                                dmem[1] = cc;
+                                ((char*)dmem)[4] = c;
+                                break;
+                            case 6:
+                                dmem[0] = cc;
+                                dmem[1] = cc;
+                                dmem[2] = cc;
+                                break;
+                            case 7:
+                                dmem[0] = cc;
+                                dmem[1] = cc;
+                                dmem[2] = cc;
+                                ((char*)dmem)[6] = c;
                                 break;
                             default:
+                                if (count < 16)
+                                {
+                                    for (int i = 0; i < count / 2; i++)
+                                    {
+                                        dmem[i] = cc;
+                                    }
+
+                                    dest[count - 1] = c;
+                                }
+
                                 ref char r = ref Unsafe.AsRef<char>(dest);
-                                SpanHelpers.Fill(ref r, (nuint) count, c);
+                                SpanHelpers.Fill(ref r, (nuint)count, c);
                                 break;
                         }
                     }
-                }
+                }*/
             }
+
             return result;
         }
 
@@ -361,7 +451,7 @@ namespace System
 #if !CORECLR
         static
 #endif
-        unsafe string Ctor(ReadOnlySpan<char> value)
+            unsafe string Ctor(ReadOnlySpan<char> value)
         {
             if (value.Length == 0)
                 return Empty;
@@ -394,20 +484,24 @@ namespace System
         /// <param name="provider">An object that supplies culture-specific formatting information.</param>
         /// <param name="handler">The interpolated string.</param>
         /// <returns>The string that results for formatting the interpolated string using the specified format provider.</returns>
-        public static string Create(IFormatProvider? provider, [InterpolatedStringHandlerArgument("provider")] ref DefaultInterpolatedStringHandler handler) =>
-            handler.ToStringAndClear();
+        public static string Create(IFormatProvider? provider,
+            [InterpolatedStringHandlerArgument("provider")]
+            ref DefaultInterpolatedStringHandler handler)
+            => handler.ToStringAndClear();
 
         /// <summary>Creates a new string by using the specified provider to control the formatting of the specified interpolated string.</summary>
         /// <param name="provider">An object that supplies culture-specific formatting information.</param>
         /// <param name="initialBuffer">The initial buffer that may be used as temporary space as part of the formatting operation. The contents of this buffer may be overwritten.</param>
         /// <param name="handler">The interpolated string.</param>
         /// <returns>The string that results for formatting the interpolated string using the specified format provider.</returns>
-        public static string Create(IFormatProvider? provider, Span<char> initialBuffer, [InterpolatedStringHandlerArgument("provider", "initialBuffer")] ref DefaultInterpolatedStringHandler handler) =>
-            handler.ToStringAndClear();
+        public static string Create(IFormatProvider? provider, Span<char> initialBuffer,
+            [InterpolatedStringHandlerArgument("provider", "initialBuffer")]
+            ref DefaultInterpolatedStringHandler handler)
+            => handler.ToStringAndClear();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator ReadOnlySpan<char>(string? value) =>
-            value != null ? new ReadOnlySpan<char>(ref value.GetRawStringData(), value.Length) : default;
+        public static implicit operator ReadOnlySpan<char>(string? value)
+            => value != null ? new ReadOnlySpan<char>(ref value.GetRawStringData(), value.Length) : default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryGetSpan(int startIndex, int count, out ReadOnlySpan<char> slice)
@@ -427,7 +521,8 @@ namespace System
             }
 #endif
 
-            slice = new ReadOnlySpan<char>(ref Unsafe.Add(ref _firstChar, (nint)(uint)startIndex /* force zero-extension */), count);
+            slice = new ReadOnlySpan<char>(ref Unsafe.Add(ref _firstChar, (nint)(uint)startIndex /* force zero-extension */),
+                count);
             return true;
         }
 
@@ -503,6 +598,7 @@ namespace System
                 Buffer.Memmove(ref destination._pointer.Value, ref _firstChar, (uint)Length);
                 retVal = true;
             }
+
             return retVal;
         }
 
@@ -540,9 +636,9 @@ namespace System
             char[] chars = new char[length];
 
             Buffer.Memmove(
-               destination: ref MemoryMarshal.GetArrayDataReference(chars),
-               source: ref Unsafe.Add(ref _firstChar, startIndex),
-               elementCount: (uint)length);
+                destination: ref MemoryMarshal.GetArrayDataReference(chars),
+                source: ref Unsafe.Add(ref _firstChar, startIndex),
+                elementCount: (uint)length);
 
             return chars;
         }
@@ -796,6 +892,7 @@ namespace System
                     normalizationForm == NormalizationForm.FormKD)
                     return true;
             }
+
             return Normalization.IsNormalized(this, normalizationForm);
         }
 
@@ -815,6 +912,7 @@ namespace System
                     normalizationForm == NormalizationForm.FormKD)
                     return this;
             }
+
             return Normalization.Normalize(this, normalizationForm);
         }
 
@@ -849,8 +947,7 @@ namespace System
         //
         public int Length
         {
-            [Intrinsic]
-            get => _stringLength;
+            [Intrinsic] get => _stringLength;
         }
     }
 }

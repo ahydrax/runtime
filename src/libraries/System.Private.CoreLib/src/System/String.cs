@@ -323,122 +323,40 @@ namespace System
             }
 
             string result = FastAllocateString(count);
-            //"jjjjjjjjjjjjjjjjjj jj jjjj"
-            if (c != '\0') // Fast path null char string
+
+            if (c == '\0')
             {
-                if (count < 32)
+                return result;
+            }
+
+            if (count < 32)
+            {
+                ref char dc = ref result._firstChar;
+                ref uint du = ref Unsafe.As<char, uint>(ref dc);
+                uint cc = (uint)((c << 16) | c);
+                if (count >= 4)
                 {
-                    ref char dc = ref result._firstChar;
-                    ref uint du = ref Unsafe.As<char, uint>(ref dc);
-                    uint cc = (uint)((c << 16) | c);
-                    if (count >= 4)
-                    {
-                        count -= 4;
-                        do
-                        {
-                            Unsafe.Add(ref du, 0) = cc;
-                            Unsafe.Add(ref du, 1) = cc;
-                            du = ref Unsafe.Add(ref du, 2);
-                            count -= 4;
-                        } while (count >= 0);
-                    }
-                    if ((count & 2) != 0)
+                    count -= 4;
+                    do
                     {
                         Unsafe.Add(ref du, 0) = cc;
-                        du = ref Unsafe.Add(ref du, 1);
-                    }
-                    Unsafe.Add(ref Unsafe.As<uint, char>(ref du), 0) = c;
-                    return result;
+                        Unsafe.Add(ref du, 1) = cc;
+                        du = ref Unsafe.Add(ref du, 2);
+                        count -= 4;
+                    } while (count >= 0);
                 }
 
-                SpanHelpers.Fill(ref result._firstChar, (nuint)count, c);
-
-                /*
-                ref char fc = ref result._firstChar;
-                ref uint fui = ref Unsafe.As<char, uint>(ref fc);
-                uint cc = (uint)c << 16 | c;
-
-                switch (count)
+                if ((count & 2) != 0)
                 {
-                    case 1:
-                        result._firstChar = c;
-                        break;
-                    case 2:
-                        fui = cc;
-                        break;
-                    case 3:
-                        fui = cc;
-                        Unsafe.Add(ref result._firstChar, 2) = c;
-                        break;
-                    case 4:
-                        Unsafe.Add(ref fui, 0) = c;
-                        Unsafe.Add(ref fui, 1) = c;
-                        break;
-                    default:
-                        ref char vd = ref result._firstChar;
-                        SpanHelpers.Fill(ref vd, (nuint)count, c);
-                        break;
+                    Unsafe.Add(ref du, 0) = cc;
+                    du = ref Unsafe.Add(ref du, 1);
                 }
 
-                /*unsafe
-                {
-
-                    ref char vd = ref result._firstChar;
-                    SpanHelpers.Fill(ref r, (nuint)count, c);
-                    return re;
-
-                    fixed (char* dest = &result._firstChar)
-                    {
-                        uint cc = ((uint)c << 16) | c;
-                        uint* dmem = (uint*)dest;
-
-                        switch (count)
-                        {
-                            case 2:
-                                dmem[0] = cc;
-                                break;
-                            case 3:
-                                dmem[0] = cc;
-                                ((char*)dmem)[2] = c;
-                                break;
-                            case 4:
-                                dmem[0] = cc;
-                                dmem[1] = cc;
-                                break;
-                            case 5:
-                                dmem[0] = cc;
-                                dmem[1] = cc;
-                                ((char*)dmem)[4] = c;
-                                break;
-                            case 6:
-                                dmem[0] = cc;
-                                dmem[1] = cc;
-                                dmem[2] = cc;
-                                break;
-                            case 7:
-                                dmem[0] = cc;
-                                dmem[1] = cc;
-                                dmem[2] = cc;
-                                ((char*)dmem)[6] = c;
-                                break;
-                            default:
-                                if (count < 16)
-                                {
-                                    for (int i = 0; i < count / 2; i++)
-                                    {
-                                        dmem[i] = cc;
-                                    }
-
-                                    dest[count - 1] = c;
-                                }
-
-                                ref char r = ref Unsafe.AsRef<char>(dest);
-                                SpanHelpers.Fill(ref r, (nuint)count, c);
-                                break;
-                        }
-                    }
-                }*/
+                Unsafe.Add(ref Unsafe.As<uint, char>(ref du), 0) = c;
+                return result;
             }
+
+            SpanHelpers.Fill(ref result._firstChar, (nuint)count, c);
 
             return result;
         }

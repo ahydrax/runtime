@@ -324,39 +324,37 @@ namespace System
 
             string result = FastAllocateString(count);
 
-            if (c == '\0')
+            if (c != '\0')
             {
-                return result;
-            }
-
-            if (count < 32)
-            {
-                ref char dc = ref result._firstChar;
-                ref uint du = ref Unsafe.As<char, uint>(ref dc);
-                uint cc = (uint)((c << 16) | c);
-                if (count >= 4)
+                if (count < 32)
                 {
-                    count -= 4;
-                    do
+                    ref uint du = ref Unsafe.As<char, uint>(ref result._firstChar);
+                    uint cc = (uint)((c << 16) | c);
+                    if (count >= 4)
+                    {
+                        count -= 4;
+                        do
+                        {
+                            Unsafe.Add(ref du, 0) = cc;
+                            Unsafe.Add(ref du, 1) = cc;
+                            du = ref Unsafe.Add(ref du, 2);
+                            count -= 4;
+                        } while (count >= 0);
+                    }
+
+                    if ((count & 2) != 0)
                     {
                         Unsafe.Add(ref du, 0) = cc;
-                        Unsafe.Add(ref du, 1) = cc;
-                        du = ref Unsafe.Add(ref du, 2);
-                        count -= 4;
-                    } while (count >= 0);
-                }
+                        du = ref Unsafe.Add(ref du, 1);
+                    }
 
-                if ((count & 2) != 0)
+                    Unsafe.Add(ref Unsafe.As<uint, char>(ref du), 0) = c;
+                }
+                else
                 {
-                    Unsafe.Add(ref du, 0) = cc;
-                    du = ref Unsafe.Add(ref du, 1);
+                    SpanHelpers.Fill(ref result._firstChar, (nuint)count, c);
                 }
-
-                Unsafe.Add(ref Unsafe.As<uint, char>(ref du), 0) = c;
-                return result;
             }
-
-            SpanHelpers.Fill(ref result._firstChar, (nuint)count, c);
 
             return result;
         }
